@@ -63,8 +63,8 @@
       }
 
       var amt = Number(amount);
-      if (!isFinite(amt) || amt < 0.01 || amt > 999999999.99) {
-        errors.amount = 'Amount must be between 0.01 and 999,999,999.99.';
+      if (!isFinite(amt) || amt < 1000 || amt > 999999999) {
+        errors.amount = 'Amount must be between 1.000 and 999.999.999.';
       }
 
       if (!category || typeof category !== 'string' || category.trim().length === 0) {
@@ -92,11 +92,21 @@
     },
 
     validateSpendingLimit: function (value) {
-      var num = Number(value);
-      if (!isFinite(num) || num < 0.01 || num > 999999999.99) {
-        return { valid: false, error: 'Limit must be between 0.01 and 999,999,999.99.' };
-      }
-      return { valid: true };
+        var num = Number(value);
+
+        if (
+            !isFinite(num) ||
+            num < 1000 ||
+            num > 999999999 ||
+            num % 1000 !== 0
+        ) {
+            return {
+                valid: false,
+                error: 'Limit must be between 1.000 and 999.999.999'
+            };
+        }
+
+        return { valid: true };
     }
   };
 
@@ -466,9 +476,9 @@
         var input = document.createElement('input');
         input.type = 'number';
         input.id = 'limit-input-' + slug;
-        input.min = '0.01';
-        input.max = '999999999.99';
-        input.step = '0.01';
+        input.min = '1000';
+        input.max = '999999999';
+        input.step = '1000';
         input.placeholder = 'No limit';
         input.setAttribute('data-category', cat);
         if (currentLimit !== undefined) input.value = currentLimit;
