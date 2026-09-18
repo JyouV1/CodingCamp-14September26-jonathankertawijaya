@@ -96,21 +96,32 @@ header h1 {
   align-items: center;
   gap: var(--spacing-sm);
 }
-header h1::before { content: '💰'; font-size: 1.25rem; }
 
 #theme-toggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
   background: rgba(255,255,255,.15);
   color: #fff;
   border: 1px solid rgba(255,255,255,.3);
-  border-radius: var(--radius);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 1rem;
-  line-height: 1;
-  min-width: 2.25rem;
+  border-radius: 50%;
   backdrop-filter: blur(4px);
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.15s;
 }
-#theme-toggle:hover { background: rgba(255,255,255,.25); }
+#theme-toggle:hover {
+  background: rgba(255,255,255,.25);
+  transform: rotate(8deg);
+}
+#theme-toggle .theme-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 /* ============================================================
    Storage warning
@@ -142,13 +153,21 @@ header h1::before { content: '💰'; font-size: 1.25rem; }
 /* Two-column rows */
 .row-two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--spacing-lg);
-  align-items: start;
+  align-items: stretch;
+}
+
+.row-two-col > .card {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {
   .row-two-col { grid-template-columns: 1fr; }
+  .row-two-col > .card { height: auto; }
   .app-layout  { padding: var(--spacing-md); gap: var(--spacing-md); }
 }
 @media (max-width: 480px) {
@@ -322,11 +341,38 @@ button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2
 }
 .btn-delete:hover { background: var(--color-danger-soft) !important; transform: none !important; }
 
+.btn-delete-category {
+  padding: 6px var(--spacing-sm) !important;
+  font-size: 0.8125rem !important;
+  background: transparent !important;
+  color: var(--color-danger) !important;
+  border: 1px solid var(--color-danger) !important;
+  box-shadow: none !important;
+  flex-shrink: 0;
+}
+
+.btn-delete-category:hover {
+  background: var(--color-danger-soft) !important;
+  transform: none !important;
+}
+
+.category-delete-error {
+  display: none;
+  width: 100%;
+  color: var(--color-danger);
+  font-size: 0.75rem;
+}
+
+.category-delete-error:not(:empty) { display: block; }
+
+
 /* ============================================================
    Transaction list
    ============================================================ */
 #transaction-list {
   max-height: 400px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -442,7 +488,17 @@ button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2
   position: relative;
   width: 100%;
   max-width: 300px;
+  min-height: 300px;
+  flex: 1;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#chart-container canvas {
+  width: 100% !important;
+  max-height: 300px;
 }
 
 #chart-empty {
@@ -457,7 +513,9 @@ button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2
    Monthly Summary
    ============================================================ */
 #summary-content {
-  max-height: 380px;
+  max-height: 400px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;

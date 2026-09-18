@@ -106,10 +106,13 @@
   var Formatter = {
     currency: function (amount) {
       var abs = Math.abs(amount);
-      var parts = abs.toFixed(2).split('.');
-      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      var formatted = parts.join('.');
-      return amount < 0 ? '-$' + formatted : '$' + formatted;
+      var parts = abs.toFixed(2).split(',');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      var formatted = abs.toLocaleString('id-ID', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+      return amount < 0 ? '-Rp' + formatted : 'Rp' + formatted;
     },
     date: function (isoString) {
       return isoString.substring(0, 10);
@@ -238,7 +241,11 @@
       if (Array.isArray(stored.transactions)) {
         State.transactions = stored.transactions;
       }
-      State.categories = DEFAULT_CATEGORIES.slice();
+      if (Array.isArray(stored.categories) && stored.categories.length > 0) {
+        State.categories = stored.categories.slice();
+        } else {
+        State.categories = DEFAULT_CATEGORIES.slice();
+        }
       if (Array.isArray(stored.categories)) {
         var lowerDefaults = DEFAULT_CATEGORIES.map(function (c) { return c.toLowerCase(); });
         stored.categories.forEach(function (cat) {
@@ -264,6 +271,10 @@
       State.transactions = State.transactions.filter(function (tx) { return tx.id !== id; });
     },
     addCategory: function (name) { State.categories.push(name); },
+    deleteCategory: function (name) {
+      State.categories = State.categories.filter(function (cat) { return cat !== name; });
+      delete State.limits[name];
+    },
     setLimit: function (cat, value) { State.limits[cat] = value; },
     setTheme: function (t) { State.theme = t; }
   };
@@ -468,14 +479,27 @@
         btn.textContent = 'Set';
         btn.setAttribute('data-category', cat);
 
+        var deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'btn-delete-category';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.setAttribute('data-category', cat);
+        deleteBtn.setAttribute('aria-label', 'Delete category ' + cat);
+
         var errorSpan = document.createElement('span');
         errorSpan.className = 'limit-error';
         errorSpan.id = 'error-limit-' + slug;
 
+        var deleteErrorSpan = document.createElement('span');
+        deleteErrorSpan.className = 'category-delete-error';
+        deleteErrorSpan.id = 'error-delete-' + slug;
+
         row.appendChild(label);
         row.appendChild(input);
         row.appendChild(btn);
+        row.appendChild(deleteBtn);
         row.appendChild(errorSpan);
+        row.appendChild(deleteErrorSpan);
         container.appendChild(row);
       });
     },
@@ -527,9 +551,14 @@
       document.body.dataset.theme = theme;
       var btn = document.getElementById('theme-toggle');
       if (btn) {
-        btn.textContent = theme === 'dark' ? '\u2600\ufe0f' : '\ud83c\udf19';
+        var isDark = theme === 'dark';
+        btn.innerHTML = isDark
+          ? '<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path></svg>'
+          : '<svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 15.2A8.5 8.5 0 0 1 8.8 3.3 8.5 8.5 0 1 0 20.7 15.2Z"></path></svg>';
         btn.setAttribute('aria-label',
-          theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+          isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        btn.setAttribute('title',
+          isDark ? 'Switch to light mode' : 'Switch to dark mode');
       }
     },
 
@@ -548,6 +577,11 @@
       if (el) el.textContent = msg || '';
     },
     clearCategoryError: function () { this.showCategoryError(''); },
+
+    showDeleteCategoryError: function (cat, msg) {
+      var el = document.getElementById('error-delete-' + (cat || '').replace(/\s+/g, '-').toLowerCase());
+      if (el) el.textContent = msg || '';
+    },
 
     showCategoryDialog: function () {
       var backdrop = document.getElementById('category-dialog-backdrop');
@@ -657,6 +691,29 @@
       }
     },
 
+    onDeleteCategory: function (cat) {
+      if (!cat || State.categories.indexOf(cat) === -1) return;
+
+      var usedByTransaction = State.transactions.some(function (tx) {
+        return tx.category === cat;
+      });
+
+      if (usedByTransaction) {
+        Renderer.showDeleteCategoryError(
+          cat,
+          'Cannot delete: this category is used by existing transactions.'
+        );
+        return;
+      }
+
+      if (!window.confirm('Delete category "' + cat + '"?')) return;
+
+      State.deleteCategory(cat);
+      Storage.save(KEYS.CATEGORIES, State.categories);
+      Storage.save(KEYS.LIMITS, State.limits);
+      App.render();
+    },
+
     onSetLimit: function (cat) {
       Renderer.clearLimitError(cat);
       var slug  = cat.replace(/\s+/g, '-').toLowerCase();
@@ -749,13 +806,19 @@
       var themeBtn = document.getElementById('theme-toggle');
       if (themeBtn) themeBtn.addEventListener('click', EventHandlers.onThemeToggle);
 
-      // Delegate limit "Set" button clicks
+      // Delegate spending-limit and category-management button clicks
       var limitsList = document.getElementById('limits-list');
       if (limitsList) {
         limitsList.addEventListener('click', function (e) {
           var btn = e.target.closest ? e.target.closest('button[data-category]') : null;
-          if (!btn || !btn.classList.contains('btn-set-limit')) return;
-          EventHandlers.onSetLimit(btn.getAttribute('data-category'));
+          if (!btn) return;
+
+          var cat = btn.getAttribute('data-category');
+          if (btn.classList.contains('btn-set-limit')) {
+            EventHandlers.onSetLimit(cat);
+          } else if (btn.classList.contains('btn-delete-category')) {
+            EventHandlers.onDeleteCategory(cat);
+          }
         });
       }
 

@@ -3,18 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Expense &amp; Budget Tracker</title>
+  <title>Expense &amp; Budget Visualizer</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body data-theme="light">
 
-  <!-- ── Header ─────────────────────────────────────────────── -->
   <header>
-    <h1>Expense Tracker</h1>
-    <button id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+    <h1>Expense &amp; Budget Visualizer</h1>
+    <button id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode"></button>
   </header>
 
-  <!-- ── Add Category Dialog (modal) ───────────────────────── -->
   <div id="category-dialog-backdrop" class="dialog-backdrop" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
       <div class="dialog-header">
@@ -36,19 +34,14 @@
     </div>
   </div>
 
-  <!-- ── Main layout ────────────────────────────────────────── -->
   <div class="app-layout">
-
-    <!-- 1. Balance (full width) -->
     <section id="balance-section" class="card">
       <p class="card-title">💳 Total Balance</p>
-      <p id="balance-display">$0.00</p>
+      <p id="balance-display">Rp0</p>
       <p class="balance-subtitle">All recorded expenses</p>
     </section>
 
-    <!-- 2. Add Transaction | Transaction List (side by side) -->
     <div class="row-two-col">
-
       <section id="form-section" class="card card-accent-indigo">
         <p class="card-title">✏️ Add Transaction</p>
         <form id="transaction-form" novalidate>
@@ -59,9 +52,9 @@
             <span class="field-error" id="error-name" role="alert"></span>
           </div>
           <div class="field-group">
-            <label for="amount">Amount ($)</label>
-            <input id="amount" type="number" min="0.01" max="999999999.99"
-                   step="0.01" placeholder="0.00" required />
+            <label for="amount">Amount (Rp)</label>
+            <input id="amount" type="number" min="1000" max="999999999.99"
+                   step="1000" placeholder="0" required />
             <span class="field-error" id="error-amount" role="alert"></span>
           </div>
           <div class="field-group">
@@ -79,18 +72,14 @@
           <p id="list-empty"></p>
         </div>
       </section>
+    </div>
 
-    </div><!-- /row-two-col -->
-
-    <!-- 3. Spending Limits (full width) -->
     <section id="spending-limits-section" class="card card-accent-amber">
       <p class="card-title">🎯 Spending Limits</p>
       <div id="limits-list"></div>
     </section>
 
-    <!-- 4. Chart | Monthly Summary (side by side) -->
     <div class="row-two-col">
-
       <section id="chart-section" class="card card-accent-indigo">
         <p class="card-title">📊 Spending Distribution</p>
         <div id="chart-container">
@@ -103,10 +92,8 @@
         <p class="card-title">📅 Monthly Summary</p>
         <div id="summary-content"></div>
       </section>
-
-    </div><!-- /row-two-col -->
-
-  </div><!-- /app-layout -->
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/script.js"></script>
